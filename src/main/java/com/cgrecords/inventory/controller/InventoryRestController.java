@@ -3,11 +3,10 @@ package com.cgrecords.inventory.controller;
 import com.cgrecords.inventory.model.InventoryItem;
 import com.cgrecords.inventory.service.InventoryService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -32,6 +31,22 @@ public class InventoryRestController {
         } else {
             return ResponseEntity.ok()
                     .body(item);
+        }
+    }
+
+    @PostMapping(value = "/items", consumes = "application/json")
+    ResponseEntity<InventoryItem> addItemToInventory(@RequestBody InventoryItem item) {
+        InventoryItem createdItem = inventoryService.saveInventoryItem(item);
+        if (createdItem == null) {
+            return ResponseEntity.internalServerError().build();
+        } else {
+            URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                    .path("/items/{id}")
+                    .buildAndExpand(createdItem.getInventory_item_id())
+                    .toUri();
+
+            return ResponseEntity.created(uri)
+                    .body(createdItem);
         }
     }
 }
