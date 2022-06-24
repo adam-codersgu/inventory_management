@@ -60,4 +60,18 @@ public class InventoryRestController {
             return ResponseEntity.ok().build();
         }
     }
+
+    @PutMapping(value = "/items/{id}", consumes = "application/json")
+    ResponseEntity<InventoryItem> updateInventoryItem(
+            @RequestBody InventoryItem item, @PathVariable("id") Long id) {
+        InventoryItem createdItem = inventoryService.getInventoryItemByID(id);
+        if (createdItem == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            item.setInventory_item_id(id);
+            inventoryService.saveInventoryItem(item);
+            return ResponseEntity.ok()
+                    .body(item);
+        }
+    }
 }
