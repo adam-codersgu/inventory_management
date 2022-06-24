@@ -49,4 +49,15 @@ public class InventoryRestController {
                     .body(createdItem);
         }
     }
+
+    @DeleteMapping("/items/{id}")
+    public ResponseEntity<Object> deleteInventoryItem(@PathVariable("id") Long id) {
+        InventoryItem item = inventoryService.getInventoryItemByID(id);
+        if (item == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            inventoryService.deleteInventoryItemByID(id);
+            return ResponseEntity.ok().build();
+        }
+    }
 }
