@@ -8,6 +8,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/inventory")
@@ -72,6 +73,25 @@ public class InventoryRestController {
             inventoryService.saveInventoryItem(item);
             return ResponseEntity.ok()
                     .body(item);
+        }
+    }
+
+    @PatchMapping("/items/{id}")
+    public ResponseEntity<InventoryItem> updateItemQuantity(
+            @RequestBody Map<String, Object> payload, @PathVariable("id") Long id) {
+        InventoryItem item = inventoryService.getInventoryItemByID(id);
+        if (item == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            Object newQuantity = payload.get("quantity");
+            if (newQuantity instanceof Integer) {
+                item.setQuantity((int) newQuantity);
+                inventoryService.saveInventoryItem(item);
+                return ResponseEntity.ok()
+                        .body(item);
+            } else {
+                return ResponseEntity.badRequest().build();
+            }
         }
     }
 }
