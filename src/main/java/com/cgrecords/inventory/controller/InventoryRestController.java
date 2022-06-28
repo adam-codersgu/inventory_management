@@ -1,6 +1,7 @@
 package com.cgrecords.inventory.controller;
 
 import com.cgrecords.inventory.model.InventoryItem;
+import com.cgrecords.inventory.model.InventoryItemAssembler;
 import com.cgrecords.inventory.service.InventoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +15,11 @@ import java.util.Map;
 @RequestMapping("/api/inventory")
 public class InventoryRestController {
     InventoryService inventoryService;
+    InventoryItemAssembler inventoryItemAssembler;
 
-    public InventoryRestController(InventoryService inventoryService) {
+    public InventoryRestController(InventoryService inventoryService, InventoryItemAssembler inventoryItemAssembler) {
         this.inventoryService = inventoryService;
+        this.inventoryItemAssembler = inventoryItemAssembler;
     }
 
     @GetMapping(value = "/items", produces = "application/json")
