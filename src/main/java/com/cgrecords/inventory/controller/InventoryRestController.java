@@ -3,11 +3,12 @@ package com.cgrecords.inventory.controller;
 import com.cgrecords.inventory.model.InventoryItem;
 import com.cgrecords.inventory.model.InventoryItemAssembler;
 import com.cgrecords.inventory.service.InventoryService;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -22,35 +23,73 @@ public class InventoryRestController {
         this.inventoryItemAssembler = inventoryItemAssembler;
     }
 
-    @GetMapping(value = "/items", produces = "application/json")
-    public List<InventoryItem> getInventory() {
-        return inventoryService.getAllInventoryItems();
+    @GetMapping("/items")
+    public ResponseEntity<CollectionModel<EntityModel<InventoryItem>>> getInventory() {
+        List<InventoryItem> items = inventoryService.getAllInventoryItems();
+        CollectionModel<EntityModel<InventoryItem>> collectionModel = inventoryItemAssembler.toCollectionModel(items);
+
+        return ResponseEntity.ok()
+                .body(collectionModel);
     }
 
-    @GetMapping(value = "/items/{id}", produces = "application/json")
-    public ResponseEntity<InventoryItem> getInventoryItemByID(@PathVariable Long id) {
+    @GetMapping(value = "/items/{id}")
+    public ResponseEntity<EntityModel<InventoryItem>> getInventoryItemByID(@PathVariable Long id) {
         InventoryItem item = inventoryService.getInventoryItemByID(id);
         if (item == null) {
             return ResponseEntity.notFound().build();
         } else {
+            EntityModel<InventoryItem> entityModel = inventoryItemAssembler.toModel(item);
             return ResponseEntity.ok()
-                    .body(item);
+                    .body(entityModel);
         }
     }
 
-    @PostMapping(value = "/items", consumes = "application/json")
-    ResponseEntity<InventoryItem> addItemToInventory(@RequestBody InventoryItem item) {
+    @PostMapping("/items")
+    ResponseEntity<EntityModel<InventoryItem>> addItemToInventory(@RequestBody InventoryItem item) {
         InventoryItem createdItem = inventoryService.saveInventoryItem(item);
-        if (createdItem == null) {
-            return ResponseEntity.internalServerError().build();
-        } else {
-            URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
-                    .path("/items/{id}")
-                    .buildAndExpand(createdItem.getInventory_item_id())
-                    .toUri();
 
-            return ResponseEntity.created(uri)
-                    .body(createdItem);
+        if (createdItem == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            EntityModel<InventoryItem> entityModel = inventoryItemAssembler.toModel(createdItem);
+            return ResponseEntity
+                    .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+                    .body(entityModel);
+        }
+    }
+
+    @PutMapping(value = "/items/{id}", consumes = "application/json")
+    ResponseEntity<EntityModel<InventoryItem>> updateInventoryItem(
+            @RequestBody InventoryItem item, @PathVariable("id") Long id) {
+        InventoryItem createdItem = inventoryService.getInventoryItemByID(id);
+        if (createdItem == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            item.setInventory_item_id(id);
+            inventoryService.saveInventoryItem(item);
+            EntityModel<InventoryItem> entityModel = inventoryItemAssembler.toModel(item);
+            return ResponseEntity.ok()
+                    .body(entityModel);
+        }
+    }
+
+    @PatchMapping("/items/{id}")
+    public ResponseEntity<EntityModel<InventoryItem>> updateItemQuantity(
+            @RequestBody Map<String, Object> payload, @PathVariable("id") Long id) {
+        InventoryItem item = inventoryService.getInventoryItemByID(id);
+        if (item == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            Object newQuantity = payload.get("quantity");
+            if (newQuantity instanceof Integer) {
+                item.setQuantity((int) newQuantity);
+                inventoryService.saveInventoryItem(item);
+                EntityModel<InventoryItem> entityModel = inventoryItemAssembler.toModel(item);
+                return ResponseEntity.ok()
+                        .body(entityModel);
+            } else {
+                return ResponseEntity.badRequest().build();
+            }
         }
     }
 
@@ -62,39 +101,6 @@ public class InventoryRestController {
         } else {
             inventoryService.deleteInventoryItemByID(id);
             return ResponseEntity.ok().build();
-        }
-    }
-
-    @PutMapping(value = "/items/{id}", consumes = "application/json")
-    ResponseEntity<InventoryItem> updateInventoryItem(
-            @RequestBody InventoryItem item, @PathVariable("id") Long id) {
-        InventoryItem createdItem = inventoryService.getInventoryItemByID(id);
-        if (createdItem == null) {
-            return ResponseEntity.notFound().build();
-        } else {
-            item.setInventory_item_id(id);
-            inventoryService.saveInventoryItem(item);
-            return ResponseEntity.ok()
-                    .body(item);
-        }
-    }
-
-    @PatchMapping("/items/{id}")
-    public ResponseEntity<InventoryItem> updateItemQuantity(
-            @RequestBody Map<String, Object> payload, @PathVariable("id") Long id) {
-        InventoryItem item = inventoryService.getInventoryItemByID(id);
-        if (item == null) {
-            return ResponseEntity.notFound().build();
-        } else {
-            Object newQuantity = payload.get("quantity");
-            if (newQuantity instanceof Integer) {
-                item.setQuantity((int) newQuantity);
-                inventoryService.saveInventoryItem(item);
-                return ResponseEntity.ok()
-                        .body(item);
-            } else {
-                return ResponseEntity.badRequest().build();
-            }
         }
     }
 }
