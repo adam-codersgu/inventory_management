@@ -65,7 +65,7 @@ public class InventoryRestController {
         if (createdItem == null) {
             return ResponseEntity.notFound().build();
         } else {
-            item.setInventory_item_id(id);
+            item.setInventoryItemId(id);
             inventoryService.saveInventoryItem(item);
             EntityModel<InventoryItem> entityModel = inventoryItemAssembler.toModel(item);
             return ResponseEntity.ok()

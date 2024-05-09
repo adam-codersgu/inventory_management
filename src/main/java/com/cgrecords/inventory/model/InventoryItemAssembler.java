@@ -18,7 +18,7 @@ public class InventoryItemAssembler implements RepresentationModelAssembler<Inve
     public EntityModel<InventoryItem> toModel(InventoryItem item) {
 
         return EntityModel.of(item,
-                linkTo(methodOn(InventoryRestController.class).getInventoryItemByID(item.getInventory_item_id())).withSelfRel(),
+                linkTo(methodOn(InventoryRestController.class).getInventoryItemByID(item.getInventoryItemId())).withSelfRel(),
                 linkTo(methodOn(InventoryRestController.class).getInventory()).withRel("items"));
     }
 

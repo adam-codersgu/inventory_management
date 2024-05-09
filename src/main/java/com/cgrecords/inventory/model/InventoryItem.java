@@ -10,7 +10,7 @@ import lombok.Data;
 public class InventoryItem {
     @Id
     @GeneratedValue
-    Long inventory_item_id;
+    Long inventoryItemId;
     String title;
     int quantity = 0;
 }
